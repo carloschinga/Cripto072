@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/JSP_Servlet/Servlet.java to edit this template
- */
 package servlet;
 
 import dto.Cliente;
@@ -19,10 +15,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-/**
- *
- * @author USER
- */
 @WebServlet(name = "ClienteListarServlet", urlPatterns = {"/clientes"})
 public class ClienteListarServlet extends HttpServlet {
 
@@ -37,11 +29,17 @@ public class ClienteListarServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String token = request.getParameter("token");
-        boolean b = util.JwtUtil.validarToken(token);
-        EntityManager em = emf.createEntityManager();
+        response.setContentType("application/json;charset=UTF-8");
 
-        if (b) {
+        String token = request.getParameter("token");
+        String tokeng = request.getParameter("tokeng");
+
+        boolean b = token != null && util.JwtUtil.validarToken(token);
+        boolean a = tokeng != null && util.JwtGoogle.verifyToken(tokeng);
+ 
+        EntityManager em = emf.createEntityManager();
+        
+        if (a || b) {
             List<Cliente> clientes = em.createNamedQuery("Cliente.findAll", Cliente.class).getResultList();
             JSONArray jsonArray = new JSONArray();
             for (Cliente c : clientes) {
@@ -56,6 +54,7 @@ public class ClienteListarServlet extends HttpServlet {
             response.setContentType("application/json;charset=UTF-8");
             try (PrintWriter out = response.getWriter()) {
                 out.print(jsonArray.toString());
+
             } finally {
                 em.close();
             }
@@ -67,7 +66,6 @@ public class ClienteListarServlet extends HttpServlet {
                 em.close();
             }
         }
-
     }
 
     @Override
@@ -76,5 +74,4 @@ public class ClienteListarServlet extends HttpServlet {
             emf.close();
         }
     }
-
 }

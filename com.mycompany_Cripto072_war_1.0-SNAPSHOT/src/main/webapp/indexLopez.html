@@ -1,0 +1,100 @@
+
+<html>
+    <head>
+        <title>Login con Google</title>
+        <meta charset="UTF-8">
+        <script src="https://accounts.google.com/gsi/client" async defer></script>
+    </head>
+    <body>        
+        <form onsubmit="return false;">
+            <h2>INICIO DE SESIÓN</h2>
+            <label>Ingrese usuario: </label><br/>
+            <input type="text" id="user"><br>
+            <label>Ingrese contraseña: </label><br/>
+            <input type="password" id="pass"><br/><br/>
+            <button id="btnIniciar">Iniciar</button>
+        </form>
+
+        <!-- Componente de login de Google -->
+        <div id="g_id_onload"
+             data-client_id="317902635607-tunhthkbdgd3nquav7ko3dkl4488jp06.apps.googleusercontent.com"
+             data-context="signin"
+             data-ux_mode="popup"
+             data-callback="handleCredentialResponse"
+             data-auto_prompt="false">
+        </div>
+
+        <div class="g_id_signin"
+             data-type="standard"
+             data-size="large"
+             data-theme="outline"
+             data-text="sign_in_with"
+             data-shape="rectangular"
+             data-logo_alignment="left">
+        </div>
+
+        <script>
+            let googleToken = null;
+
+            function handleCredentialResponse(response) {
+                // Guardamos el token de Google
+                googleToken = response.credential;
+                console.log("Token JWT de Google:", googleToken);
+
+                // Llamamos directamente al servlet con el token de Google
+                    fetch(`clientes?tokeng=${encodeURIComponent(googleToken)}`)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error("Respuesta HTTP inválida");
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (data.resultado === "error") {
+                                    alert("Token inválido o expirado");
+                                } else {
+                                    setCookie("token", googleToken, 7);
+                                    console.log("Clientes recibidos:", data);
+                                    window.location.href = "clientes.html";
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error al procesar token de Google:", error);
+                            });
+                }
+
+            let btnIniciar = document.getElementById("btnIniciar");
+            btnIniciar.addEventListener("click", function () {
+                let user = document.getElementById("user").value;
+                let pass = document.getElementById("pass").value;
+
+                let url = `logueousuario?user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`;
+
+                fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.resultado === "ok") {
+                                console.log(data.token);
+                                // Ejemplo:
+                                setCookie("token", data.token, 7);
+                                //redirigir:
+                                window.location.href = "clientes.html";
+                            } else {
+                                alert("Usuario o contraseña incorrectos");
+                            }
+                        })
+                        .catch(error => {
+                            console.error("Error al procesar la solicitud:", error);
+                        });
+            });
+
+            // Crear una cookie llamada "usuario" con valor "Juan" que expira en 7 días
+            function setCookie(nombre, valor, dias) {
+                const fecha = new Date();
+                fecha.setTime(fecha.getTime() + (dias * 24 * 60 * 60 * 1000));
+                const expira = "expires=" + fecha.toUTCString();
+                document.cookie = nombre + "=" + valor + ";" + expira + ";path=/";
+            }
+        </script>
+    </body>
+</html>
